@@ -65,7 +65,7 @@ if (result.error) {
 if (result.status === 0) {
   try {
     const log = fs.readFileSync(path.join(project, 'build', 'circuit-serial.log'), 'utf8');
-    const readings = [...log.matchAll(/N=(\d) P=(\d) K=(\d) ADC_LDR=(\d+) UMIDADE_INDICE=([\d.]+) TEMPERATURA_C=([\d.]+) RELE_COMANDO=(ON|OFF) CONTATO_NO=(ABERTO|FECHADO)/g)];
+    const readings = [...log.matchAll(/N=(\d) P=(\d) K=(\d) ADC_LDR=(\d+) UMIDADE_INDICE=([\d.]+) TEMPERATURA_C=([\d.]+) RELE_COMANDO=(ON|OFF) CONTATO_NO=(ABERTO|FECHADO) PH_SIMULADO=([\d.]+) ALERTAS=([A-Z_,]+?)(?=N=[01]|RELE:|\s|$)/g)];
     assert.ok(readings.length > 0, 'Nenhuma leitura completa registrada.');
     assert.equal(new Set(readings.map(reading => reading.slice(1, 4).join(''))).size, 8, 'Combinações de NPK incompletas.');
     for (const humidity of [0, 50, 100]) {
@@ -74,7 +74,19 @@ if (result.status === 0) {
     for (const reading of readings) {
       assert.ok(Number(reading[4]) >= 0 && Number(reading[4]) <= 4095, 'ADC fora da escala.');
       assert.equal(reading[8], reading[7] === 'ON' ? 'FECHADO' : 'ABERTO', 'Contato diverge do comando.');
+      const ph = Math.max(0, Math.min(14, (Number(reading[4]) - 32) * 14 / (4063 - 32)));
+      assert.ok(Math.abs(Number(reading[9]) - ph) <= 0.00051, 'Conversao do pH diverge do ADC.');
+      const expectedAlerts = [];
+      for (const [position, name] of [[1, 'N_INSUFICIENTE'], [2, 'P_INSUFICIENTE'], [3, 'K_INSUFICIENTE']]) {
+        if (reading[position] === '0') expectedAlerts.push(name);
+      }
+      if (ph < 6 || ph > 6.5) expectedAlerts.push('PH_FORA_FAIXA');
+      assert.equal(reading[10], expectedAlerts.join(',') || 'NENHUM', 'Alertas divergem das entradas.');
     }
+    assert.ok(readings.some(reading => reading[10] === 'NENHUM'), 'Cenario sem alertas ausente.');
+    assert.ok(readings.some(reading => reading[7] === 'ON'
+        && reading[10] === 'N_INSUFICIENTE,P_INSUFICIENTE,K_INSUFICIENTE,PH_FORA_FAIXA'),
+    'Relé ligado com alertas simultaneos nao foi verificado.');
     const adcAtTemperature = temperature => {
       const reading = readings.find(reading => Number(reading[6]) === temperature);
       assert.ok(reading, `Amostra do LDR com marcador ${temperature} ausente.`);
@@ -84,7 +96,8 @@ if (result.status === 0) {
     const middle = adcAtTemperature(22);
     const bright = adcAtTemperature(23);
     assert.ok(dark > middle && middle > bright, 'ADC do LDR nao diminuiu com mais luz.');
-    console.log(`OK: oito combinacoes NPK, umidades 0/50/100 e contato do rele consistente.`);
+    console.log(`OK: oito combinacoes NPK, conversao e alertas de pH, caso sem alertas e rele independente.`);
+    console.log(`OK: umidades 0/50/100 e contato do rele consistente.`);
     console.log(`LDR: 0.1 lux=${dark}; 500 lux=${middle}; 100000 lux=${bright}.`);
   } catch (error) {
     console.error(`Falha na verificacao do registro: ${error.message.replaceAll(token, '[REDACTED]')}`);

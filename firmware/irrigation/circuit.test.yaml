@@ -22,6 +22,9 @@ steps:
   - wait-serial: 'N=1 P=1 K=0'
   - set-control: { part-id: potassium, control: pressed, value: 1 }
   - wait-serial: 'N=1 P=1 K=1'
+  - set-control: { part-id: phSensor, control: lux, value: 140 }
+  - wait-serial: 'ALERTAS=NENHUM'
+  - set-control: { part-id: phSensor, control: lux, value: 500 }
   - set-control: { part-id: nitrogen, control: pressed, value: 0 }
   - set-control: { part-id: phosphorus, control: pressed, value: 0 }
   - set-control: { part-id: potassium, control: pressed, value: 0 }
