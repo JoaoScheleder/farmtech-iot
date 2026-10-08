@@ -1,0 +1,50 @@
+name: 'FarmTech - diagnostico do circuito'
+version: 1
+author: 'FarmTech Solutions'
+steps:
+  - wait-serial: 'N=0 P=0 K=0'
+  - wait-serial: 'RELE_COMANDO=OFF CONTATO_NO=ABERTO'
+  - set-control: { part-id: potassium, control: pressed, value: 1 }
+  - wait-serial: 'N=0 P=0 K=1'
+  - set-control: { part-id: potassium, control: pressed, value: 0 }
+  - set-control: { part-id: phosphorus, control: pressed, value: 1 }
+  - wait-serial: 'N=0 P=1 K=0'
+  - set-control: { part-id: potassium, control: pressed, value: 1 }
+  - wait-serial: 'N=0 P=1 K=1'
+  - set-control: { part-id: potassium, control: pressed, value: 0 }
+  - set-control: { part-id: phosphorus, control: pressed, value: 0 }
+  - set-control: { part-id: nitrogen, control: pressed, value: 1 }
+  - wait-serial: 'N=1 P=0 K=0'
+  - set-control: { part-id: potassium, control: pressed, value: 1 }
+  - wait-serial: 'N=1 P=0 K=1'
+  - set-control: { part-id: potassium, control: pressed, value: 0 }
+  - set-control: { part-id: phosphorus, control: pressed, value: 1 }
+  - wait-serial: 'N=1 P=1 K=0'
+  - set-control: { part-id: potassium, control: pressed, value: 1 }
+  - wait-serial: 'N=1 P=1 K=1'
+  - set-control: { part-id: nitrogen, control: pressed, value: 0 }
+  - set-control: { part-id: phosphorus, control: pressed, value: 0 }
+  - set-control: { part-id: potassium, control: pressed, value: 0 }
+  - set-control: { part-id: moistureSensor, control: humidity, value: 0 }
+  - wait-serial: 'UMIDADE_INDICE=0.0 TEMPERATURA_C=24.0 RELE_COMANDO=OFF CONTATO_NO=ABERTO'
+  - set-control: { part-id: moistureSensor, control: humidity, value: 100 }
+  - wait-serial: 'UMIDADE_INDICE=100.0 TEMPERATURA_C=24.0 RELE_COMANDO=OFF CONTATO_NO=ABERTO'
+  - set-control: { part-id: moistureSensor, control: humidity, value: 50 }
+  - set-control: { part-id: phSensor, control: lux, value: 0.1 }
+  - set-control: { part-id: moistureSensor, control: temperature, value: 21 }
+  - wait-serial: 'UMIDADE_INDICE=50.0 TEMPERATURA_C=21.0 RELE_COMANDO=OFF CONTATO_NO=ABERTO'
+  - set-control: { part-id: phSensor, control: lux, value: 500 }
+  - set-control: { part-id: moistureSensor, control: temperature, value: 22 }
+  - wait-serial: 'UMIDADE_INDICE=50.0 TEMPERATURA_C=22.0 RELE_COMANDO=OFF CONTATO_NO=ABERTO'
+  - set-control: { part-id: phSensor, control: lux, value: 100000 }
+  - set-control: { part-id: moistureSensor, control: temperature, value: 23 }
+  - wait-serial: 'UMIDADE_INDICE=50.0 TEMPERATURA_C=23.0 RELE_COMANDO=OFF CONTATO_NO=ABERTO'
+  - write-serial: '1'
+  - wait-serial: 'RELE_COMANDO=ON CONTATO_NO=FECHADO'
+  - write-serial: '0'
+  - wait-serial: 'RELE: comando OFF enviado; confira contato e LED.'
+  - wait-serial: 'RELE_COMANDO=OFF CONTATO_NO=ABERTO'
+  - write-serial: '1'
+  - wait-serial: 'RELE_COMANDO=ON CONTATO_NO=FECHADO'
+  - wait-serial: 'RELE: comando OFF enviado; confira contato e LED.'
+  - wait-serial: 'RELE_COMANDO=OFF CONTATO_NO=ABERTO'

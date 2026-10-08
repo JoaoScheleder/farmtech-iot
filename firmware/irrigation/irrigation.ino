@@ -9,8 +9,8 @@ constexpr uint8_t PH_PIN = 34;
 constexpr uint8_t DHT_PIN = 16;
 constexpr uint8_t RELAY_PIN = 18;
 constexpr uint8_t RELAY_CONTACT_PIN = 19;
-constexpr uint8_t RELAY_OFF_LEVEL = HIGH;
-constexpr uint8_t RELAY_ON_LEVEL = LOW;
+constexpr uint8_t RELAY_OFF_LEVEL = LOW;
+constexpr uint8_t RELAY_ON_LEVEL = HIGH;
 constexpr uint32_t SAMPLE_INTERVAL_MS = 2500;
 constexpr uint32_t RELAY_TEST_DURATION_MS = 5000;
 
