@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -25,23 +25,47 @@ if (!fs.existsSync(path.join(project, 'build', 'irrigation.ino.bin'))) {
   console.error('Compile firmware/irrigation com --output-dir firmware/irrigation/build.');
   process.exit(1);
 }
-const result = spawnSync('wokwi-cli', [
+const child = spawn('wokwi-cli', [
   project, '--scenario', 'circuit.test.yaml', '--timeout', '65000',
   '--serial-log-file', path.join(project, 'build', 'circuit-serial.log'),
 ], {
   env: { ...process.env, WOKWI_CLI_TOKEN: token },
-  encoding: 'utf8', timeout: 240000, maxBuffer: 4 * 1024 * 1024,
+  stdio: ['ignore', 'pipe', 'pipe'],
 });
-for (const output of [result.stdout, result.stderr]) {
-  if (output) process.stdout.write(output.replaceAll(token, '[REDACTED]'));
+for (const stream of [child.stdout, child.stderr]) {
+  let pending = '';
+  stream.setEncoding('utf8');
+  stream.on('data', chunk => {
+    pending += chunk;
+    const lines = pending.split('\n');
+    pending = lines.pop();
+    for (const line of lines) process.stdout.write(`${line.replaceAll(token, '[REDACTED]')}\n`);
+  });
+  stream.on('end', () => {
+    if (pending) process.stdout.write(pending.replaceAll(token, '[REDACTED]'));
+  });
 }
+process.once('SIGINT', () => child.kill('SIGINT'));
+process.once('SIGTERM', () => child.kill('SIGTERM'));
+const result = await new Promise(resolve => {
+  let error;
+  const deadline = setTimeout(() => {
+    error = new Error('Tempo limite de execucao excedido.');
+    child.kill('SIGKILL');
+  }, 240000);
+  child.once('error', () => { error = new Error('Falha ao executar o CLI.'); });
+  child.once('close', status => {
+    clearTimeout(deadline);
+    resolve({ status, error });
+  });
+});
 if (result.error) {
   console.error('Nao foi possivel concluir o Wokwi CLI; confira instalacao, rede e tempo limite.');
 }
 if (result.status === 0) {
   try {
     const log = fs.readFileSync(path.join(project, 'build', 'circuit-serial.log'), 'utf8');
-    const readings = [...log.matchAll(/^N=(\d) P=(\d) K=(\d) ADC_LDR=(\d+) UMIDADE_INDICE=([\d.]+) TEMPERATURA_C=([\d.]+) RELE_COMANDO=(ON|OFF) CONTATO_NO=(ABERTO|FECHADO)/gm)];
+    const readings = [...log.matchAll(/N=(\d) P=(\d) K=(\d) ADC_LDR=(\d+) UMIDADE_INDICE=([\d.]+) TEMPERATURA_C=([\d.]+) RELE_COMANDO=(ON|OFF) CONTATO_NO=(ABERTO|FECHADO)/g)];
     assert.ok(readings.length > 0, 'Nenhuma leitura completa registrada.');
     assert.equal(new Set(readings.map(reading => reading.slice(1, 4).join(''))).size, 8, 'Combinações de NPK incompletas.');
     for (const humidity of [0, 50, 100]) {

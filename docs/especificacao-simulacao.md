@@ -1,6 +1,6 @@
 # Especificação proposta da simulação
 
-Esta especificação traduz o [enunciado](../CONTEXT.md) e a [pesquisa do tomateiro](cultura-tomate.md) em regras verificáveis. **As regras de irrigação abaixo continuam propostas, ainda sem controle automático implementado.** O [circuito e o sketch de diagnóstico](circuito-wokwi.md) foram preparados na etapa 2; a execução no simulador permanece pendente.
+Esta especificação traduz o [enunciado](../CONTEXT.md) e a [pesquisa do tomateiro](cultura-tomate.md) em regras verificáveis. **As regras de irrigação abaixo continuam propostas, ainda sem controle automático implementado.** O [circuito e o sketch de diagnóstico](circuito-wokwi.md) passaram pelos testes de sensores, botões e contato do relé na nuvem; isso não valida as regras de controle abaixo.
 
 ## Componentes e significado das entradas
 
@@ -16,7 +16,7 @@ Esta especificação traduz o [enunciado](../CONTEXT.md) e a [pesquisa do tomate
 
 Os botões representarão estados momentâneos, sem alternância automática a cada clique. Para demonstrar combinações, será necessário manter os botões desejados pressionados; o Wokwi permite Ctrl+clique para mantê-los pressionados. O futuro controle deverá tratar repiques sem alterar esse significado; o sketch de diagnóstico ainda mostra as leituras brutas.
 
-O relé deve iniciar desligado. O nível elétrico que representa esse estado será confirmado observando os contatos COM/NO no simulador, sem assumir que `HIGH` equivale a bomba ligada. A pinagem, a alimentação e a polaridade provisória estão registradas no [guia do circuito](circuito-wokwi.md); a confirmação dinâmica ainda está pendente.
+O relé deve iniciar desligado. Para o componente `npn` desta montagem, o teste do contato confirmou LOW para OFF e HIGH para ON. A pinagem, a alimentação e os resultados estão registrados no [guia do circuito](circuito-wokwi.md). Mudanças no modelo exigem nova verificação; os testes não comprovam ausência de pulsos antes da primeira amostra.
 
 ## Conversão do LDR
 

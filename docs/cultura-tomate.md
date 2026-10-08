@@ -1,6 +1,6 @@
 # Cultura escolhida: tomateiro
 
-Este documento registra a pesquisa da etapa 1 do projeto FarmTech Solutions, conforme o [enunciado](../CONTEXT.md). A cultura recomendada é o tomateiro (*Solanum lycopersicum*). O [circuito de diagnóstico](circuito-wokwi.md) foi preparado na etapa 2; sua execução no simulador e o controle automático ainda estão pendentes.
+Este documento registra a pesquisa da etapa 1 do projeto FarmTech Solutions, conforme o [enunciado](../CONTEXT.md). A cultura recomendada é o tomateiro (*Solanum lycopersicum*). O [circuito de diagnóstico](circuito-wokwi.md) passou pelos testes da etapa 2 na nuvem; o controle automático e a conversão do LDR para pH ainda estão pendentes.
 
 ## Recorte do projeto
 

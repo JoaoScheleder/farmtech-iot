@@ -7,6 +7,9 @@ A etapa 2 disponibiliza o circuito do ESP32 e um sketch de diagnóstico. Não h�
 - [diagram.json](../firmware/irrigation/diagram.json): componentes, conexões e Monitor Serial.
 - [irrigation.ino](../firmware/irrigation/irrigation.ino): sketch de diagnóstico em C/C++.
 - [libraries.txt](../firmware/irrigation/libraries.txt): biblioteca DHT sensor library for ESPx, versão 1.19 (resolvida como 1.19.0 na compilação local).
+- [wokwi.toml](../firmware/irrigation/wokwi.toml): firmware compilado utilizado pelo simulador local/CI.
+- [circuit.test.yaml](../firmware/irrigation/circuit.test.yaml): cenário automatizado de sensores, botões e relé.
+- [test-circuit.mjs](../tools/test-circuit.mjs): executor que carrega a credencial local e verifica o registro Serial, sem exibir o token.
 
 O nome do sketch coincide com a pasta `irrigation` para permitir compilação pela ferramenta Arduino. No navegador, o conteúdo desse sketch deve ocupar a aba `sketch.ino` do projeto Wokwi.
 
@@ -19,7 +22,7 @@ O nome do sketch coincide com a pasta `irrigation` para permitir compilação pe
 | Botão verde K, contato 1 | 27 | D27 | Contato 2 no GND; entrada com pull-up interno |
 | LDR, saída AO | 34 | D34 | VCC em 3,3 V e GND comum; DO não utilizado |
 | DHT22, SDA | 16 | RX2 | VCC em 3,3 V, GND comum e pull-up de 10 kΩ entre SDA e 3,3 V |
-| Relé, entrada IN | 18 | D18 | VCC em VIN (5 V no modelo), GND comum e pull-up de 10 kΩ de IN para 3,3 V |
+| Relé, entrada IN | 18 | D18 | VCC em VIN (5 V no modelo), GND comum e pull-down de 10 kΩ de IN para GND |
 | Retorno do contato COM | 19 | D19 | Entrada com pull-down interno, apenas para diagnóstico |
 
 Embora a placa rotule o GPIO16 como RX2, ele é usado como GPIO para o DHT22, não como uma segunda porta Serial. TX0/RX0 continuam ligados ao Monitor Serial.
@@ -43,7 +46,7 @@ A compilação no navegador precisa ser conferida separadamente: sua versão do 
 A cada 2,5 segundos, o sketch registra N, P, K, `ADC_LDR`, `UMIDADE_INDICE`, temperatura, comando do relé e estado observado do contato NO.
 
 - NPK: `1` significa botão pressionado; `0`, botão solto. São leituras de diagnóstico, ainda sem o tratamento de repiques da futura lógica de controle.
-- LDR: `ADC_LDR` é a leitura bruta de um ADC configurado em 12 bits, com atenuação `ADC_11db`. Não é pH. O valor numérico pertence à escala 0–4095, mas os extremos realmente alcançados precisam ser medidos.
+- LDR: `ADC_LDR` é a leitura bruta de um ADC configurado em 12 bits, com atenuação `ADC_11db`. Não é pH. O valor numérico pertence à escala 0–4095; as leituras observadas em três iluminações estão registradas abaixo. Ainda falta definir e verificar a conversão em pH.
 - DHT22: leitura inválida de umidade ou temperatura aparece como `ERRO`, não como zero. A umidade continua sendo uma representação didática, não uma medida real de água no solo.
 - Relé: `RELE_COMANDO` indica a intenção do sketch; `CONTATO_NO` indica o retorno lido no GPIO19. Não tratar o comando como prova de que o contato fechou.
 
@@ -51,30 +54,33 @@ A cada 2,5 segundos, o sketch registra N, P, K, `ADC_LDR`, `UMIDADE_INDICE`, tem
 
 | Teste | Ação | Resultado esperado | Situação |
 | --- | --- | --- | --- |
-| Inicialização | Iniciar sem enviar comandos | Comando OFF, contato aberto e LED apagado | Pendente |
-| Botão N | Manter N pressionado e aguardar uma amostragem | Somente N passa para 1 | Pendente |
-| Botão P | Manter P pressionado e aguardar uma amostragem | Somente P passa para 1 | Pendente |
-| Botão K | Manter K pressionado e aguardar uma amostragem | Somente K passa para 1 | Pendente |
-| Combinações | Executar as oito combinações da documentação | Leituras correspondem aos botões pressionados | Pendente |
-| DHT22 | Ajustar o controle de umidade para 0, 50 e 100 | Índice acompanha cada valor após nova amostragem | Pendente |
-| Temperatura | Ajustar o controle do DHT22 para outro valor | Temperatura registrada acompanha o controle | Pendente |
-| LDR | Variar a iluminação entre extremos e ponto intermediário | ADC muda; registrar valores e direção antes de converter para pH | Pendente |
-| Relé ON | Enviar `1` no Monitor Serial | Contato fechado e LED aceso por até cinco segundos | Pendente |
-| Relé OFF | Durante o teste, enviar `0` | Contato aberto e LED apagado | Pendente |
-| Limite do teste | Enviar `1` e não enviar mais comandos | Comando volta a OFF ao completar cinco segundos | Pendente |
-| Independência | Alterar umidade/NPK/LDR sem comando Serial | Não ligar automaticamente o relé | Pendente |
+| Inicialização | Iniciar sem enviar comandos | Comando OFF, contato aberto na primeira amostra | Aprovado via CLI |
+| Botão N | Manter N pressionado e aguardar uma amostragem | Somente N passa para 1 | Aprovado via CLI |
+| Botão P | Manter P pressionado e aguardar uma amostragem | Somente P passa para 1 | Aprovado via CLI |
+| Botão K | Manter K pressionado e aguardar uma amostragem | Somente K passa para 1 | Aprovado via CLI |
+| Combinações | Executar as oito combinações da documentação | Leituras correspondem aos botões pressionados | Aprovado via CLI |
+| DHT22 | Ajustar o controle de umidade para 0, 50 e 100 | Índice acompanha cada valor após nova amostragem | Aprovado via CLI |
+| Temperatura | Ajustar para 21, 22 e 23 °C, além dos 24 °C iniciais | Temperatura registrada acompanha o controle | Aprovado via CLI |
+| LDR | Ajustar para 0,1, 500 e 100000 lux | ADC diminui com aumento da iluminação | Aprovado via CLI |
+| Relé ON | Enviar `1` no Monitor Serial | Contato fechado | Aprovado via retorno GPIO19 |
+| Relé OFF | Durante o teste, enviar `0` | Contato aberto | Aprovado via retorno GPIO19 |
+| Limite do teste | Enviar `1` e não enviar mais comandos | Desligamento automático, programado para cinco segundos | Aprovado via CLI |
+| Independência | Alterar umidade/NPK/LDR sem comando Serial | Relé permanece desligado nas amostras | Aprovado via CLI |
+| Visual | Capturar o circuito e o LED nos estados ON/OFF | Aparência e sinalização visual coerentes | Pendente |
+
+Os testes verificam estados nas amostras e mensagens do cenário. Não medem pulsos durante a inicialização nem certificam o instante exato de comutação. A aprovação elétrica do contato não substitui a captura visual do LED.
 
 Com foco no diagrama, as teclas N, P e K controlam os botões. Para manter vários pressionados, use Ctrl+clique em cada botão; um novo clique o libera. Esse recurso é documentado pelo [Wokwi](https://docs.wokwi.com/parts/wokwi-pushbutton#stickiness).
 
 O comando `1` não renova a duração quando o teste já está ativo. Após o desligamento, um novo comando pode iniciar outro teste. Essa é uma ferramenta de bancada do simulador, não o controle de uma bomba real; erros de sensor não bloqueiam esse acionamento manual.
 
-## Polaridade do relé: confirmação obrigatória
+## Polaridade do relé: resultado observado
 
-O diagrama fixa o atributo `transistor` como `npn`. O sketch adota provisoriamente **HIGH para OFF** e **LOW para ON**, conforme a descrição de operação dos contatos na [referência do relé](https://docs.wokwi.com/parts/wokwi-relay-module). A tabela de atributos dessa página descreve a polaridade de outra forma; por isso, o teste do contato é obrigatório.
+O diagrama fixa o atributo `transistor` como `npn`. O teste na Wokwi Simulation API **1.0.0-20261006-g9494a200** confirmou **LOW para OFF** e **HIGH para ON**, por leitura do contato no GPIO19. A configuração provisória anterior estava invertida: o primeiro teste encontrou contato fechado durante o comando OFF. As constantes e o resistor externo foram corrigidos, e o cenário passou após recompilação.
 
-Se o LED iniciar aceso ou se o retorno do contato divergir do comando, interrompa a simulação. A polaridade ainda não estará validada: confira a ligação NO/COM e ajuste as constantes `RELAY_OFF_LEVEL` e `RELAY_ON_LEVEL` somente após observar o comportamento. Não continue para o controle automático com essa divergência.
+Esse resultado corresponde à tabela de atributos, mas diverge da descrição textual dos contatos na [referência do relé](https://docs.wokwi.com/parts/wokwi-relay-module). Em caso de mudança de componente ou versão do simulador, repita o teste e interrompa a execução se comando e contato divergirem.
 
-O pull-up externo busca manter IN em nível alto durante a inicialização. Isso não constitui garantia de segurança para um módulo físico ou evidência de ausência de pulsos no simulador.
+O pull-down externo busca manter IN em nível baixo durante a inicialização. Isso não constitui garantia de segurança para um módulo físico ou evidência de ausência de pulsos no simulador.
 
 ## Verificações realizadas
 
@@ -82,8 +88,17 @@ Em 8 de outubro de 2026:
 
 - Diagrama analisado como JSON: 11 componentes e 26 conexões.
 - Lint oficial Wokwi CLI **0.28.1** executado com `--warnings-as-errors`: sem erros ou avisos. Há uma informação de que o tipo DevKit v1 não possui documentação própria e pode mudar futuramente.
-- Sketch compilado com Arduino CLI **1.5.2-rc.1**, core **esp32:esp32 2.0.17**, alvo **esp32:esp32:esp32** e DHTesp **1.19.0**. Uso reportado: 270741 bytes de programa e 21648 bytes de memória global.
-- Simulação dinâmica não executada nesta sessão: Wokwi CI requer uma credencial não disponível. Os testes acima, a calibração do LDR e as capturas continuam pendentes; o Wokwi do navegador é a alternativa prevista.
+- Sketch corrigido compilado com Arduino CLI **1.5.2-rc.1**, core **esp32:esp32 2.0.17**, alvo **esp32:esp32:esp32** e DHTesp **1.19.0**. Uso reportado: 270745 bytes de programa e 21648 bytes de memória global.
+- Cenário completo executado na nuvem: `Scenario completed successfully`. A checagem local dos registros também passou, incluindo oito combinações NPK, umidades 0/50/100 e contato coerente com cada comando.
+- Leituras do LDR: **4063 em 0,1 lux**, **1001 em 500 lux** e **32 em 100000 lux**. São pontos medidos nesta configuração, não extremos universais do ADC nem medições de pH.
+- Um primeiro cenário completo foi interrompido. Uma execução seguinte passou na nuvem, mas revelou um defeito no parser local: o log pode agrupar registros sem quebra de linha. O parser foi corrigido e o cenário completo repetido; somente a execução final foi aprovada em ambas as verificações.
+- Capturas visuais, conversão/calibração didática do pH e cenários de irrigação automática continuam pendentes.
+
+## Executar os testes sem navegador
+
+É necessário Node.js 22 ou posterior, Wokwi CLI instalado e um token do painel Wokwi CI. O executor aceita `WOKWI_CLI_TOKEN` ou `WOKWI_API_KEY` no ambiente ou no arquivo `.env` da raiz, mapeando a chave para o nome exigido pelo CLI apenas no processo filho. Não imprima a chave e não a inclua no Git.
+
+O cenário usa o simulador na nuvem e consome a cota da conta. O executor transmite o progresso em tempo real, limita cada execução a 65 segundos simulados e impõe um limite de quatro minutos de tempo real. Uma interrupção também encerra o processo filho. O registro é gerado em `firmware/irrigation/build/circuit-serial.log`, dentro da pasta ignorada pelo Git.
 
 Com ferramentas instaladas, a verificação pode ser reproduzida a partir da raiz do repositório:
 
@@ -92,7 +107,8 @@ wokwi-cli lint --warnings-as-errors firmware/irrigation/diagram.json
 arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
 arduino-cli core install esp32:esp32@2.0.17 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
 arduino-cli lib install "DHT sensor library for ESPx@1.19.0"
-arduino-cli compile --fqbn esp32:esp32:esp32 --warnings all firmware/irrigation
+arduino-cli compile --fqbn esp32:esp32:esp32 --warnings all --output-dir firmware/irrigation/build firmware/irrigation
+node tools/test-circuit.mjs
 ```
 
-Lint e compilação não comprovam leitura correta dos sensores, aparência do circuito ou polaridade do relé. A implementação das regras de irrigação da [especificação](especificacao-simulacao.md) será a próxima etapa, após a conferência manual desta montagem. Os [cenários do sistema](cenarios-validacao.md) permanecem pendentes.
+O teste valida a montagem de diagnóstico, não as regras de irrigação da [especificação](especificacao-simulacao.md). Os [cenários do sistema](cenarios-validacao.md) permanecem pendentes. A apresentação visual e as imagens para entrega ainda precisam ser conferidas separadamente.
