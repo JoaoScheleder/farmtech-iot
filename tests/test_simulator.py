@@ -76,6 +76,18 @@ class SimulatorTest(unittest.TestCase):
             with self.subTest(seconds=seconds), self.assertRaises(ValueError):
                 simulator.run_simulation({"seconds": seconds})
 
+    def test_cloud_job_executes_only_existing_runner(self):
+        with patch.object(simulator.threading, "Thread") as thread:
+            with patch.object(simulator.subprocess, "Popen") as popen:
+                process = popen.return_value
+                process.communicate.return_value = ("OK: suite mock", None)
+                process.returncode = 0
+                thread.return_value.start.side_effect = lambda: thread.call_args.kwargs["target"]()
+                job = simulator.start_cloud_test()
+                self.assertEqual(simulator.JOBS[job["id"]]["status"], "passed")
+                self.assertEqual(popen.call_args.args[0], ["node", str(simulator.ROOT / "tools/test-circuit.mjs")])
+                self.assertNotIn("shell", popen.call_args.kwargs)
+
 
 if __name__ == "__main__":
     unittest.main()
