@@ -1,6 +1,6 @@
 # Cenários de validação planejados
 
-Os casos abaixo verificam a [especificação proposta](especificacao-simulacao.md), fundamentada na [pesquisa do tomateiro](cultura-tomate.md). **Nenhum cenário foi executado nesta etapa.** Os resultados são expectativas, não evidências de funcionamento.
+Os casos abaixo verificam a [especificação proposta](especificacao-simulacao.md), fundamentada na [pesquisa do tomateiro](cultura-tomate.md). **Nenhum cenário funcional foi executado até o momento.** Os resultados são expectativas, não evidências de funcionamento. O [guia do circuito](circuito-wokwi.md) registra o lint, a compilação do diagnóstico e o roteiro manual da etapa 2; esses checks não validam as regras de irrigação.
 
 ## Preparação
 
