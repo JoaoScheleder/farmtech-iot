@@ -40,13 +40,14 @@ if (process.argv.includes('--live-weather')) {
   const extraSteps = [
     `  - write-serial: ${JSON.stringify(forecast.stdout.trim() + '\n')}`,
     `  - wait-serial: 'ACK WEATHER fetched_at=${liveCommand.fetched_at_epoch_s} ttl_s=3600'`,
-    `  - write-serial: '{"type":"auto","schema_version":1}\\n'`,
+    '  - write-serial: |\n      {"type":"auto","schema_version":1}',
     `  - wait-serial: '${expected}'`,
     `  - wait-serial: 'RELE_COMANDO=${rainy ? 'OFF' : 'ON'} CONTATO_NO=${rainy ? 'ABERTO' : 'FECHADO'}'`,
   ];
   scenario = 'build/weather-live.test.yaml';
   fs.writeFileSync(path.join(project, scenario),
-    fs.readFileSync(path.join(project, 'circuit.test.yaml'), 'utf8') + extraSteps.join('\n') + '\n');
+    fs.readFileSync(path.join(project, 'circuit.test.yaml'), 'utf8').trimEnd()
+      + '\n' + extraSteps.join('\n') + '\n');
 }
 const child = spawn('wokwi-cli', [
   project, '--scenario', scenario, '--timeout', '180000',

@@ -51,7 +51,7 @@ steps:
   - wait-serial: 'RELE_COMANDO=ON CONTATO_NO=FECHADO'
   - wait-serial: 'RELE: comando OFF enviado; confira contato e LED.'
   - wait-serial: 'RELE_COMANDO=OFF CONTATO_NO=ABERTO'
-  - write-serial: '{"type":"auto","schema_version":1}\n'
+  - write-serial: "{\"type\":\"auto\",\"schema_version\":1}\n"
   - wait-serial: 'ACK AUTO'
   - set-control: { part-id: moistureSensor, control: humidity, value: 35 }
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=ON MOTIVO=MOISTURE_DEMAND'
@@ -63,7 +63,7 @@ steps:
   - wait-serial: 'UMIDADE_INDICE=50.0 TEMPERATURA_C=23.0 RELE_COMANDO=OFF CONTATO_NO=ABERTO'
   - set-control: { part-id: moistureSensor, control: humidity, value: 35 }
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=ON MOTIVO=MOISTURE_DEMAND'
-  - write-serial: '{"type":"weather","schema_version":1,"fetched_at_epoch_s":1640995200,"window_start_epoch_s":1640995200,"window_end_epoch_s":1641016800,"precip_mm":2,"max_hourly_probability_pct":60,"ttl_s":30}\n'
+  - write-serial: "{\"type\":\"weather\",\"schema_version\":1,\"fetched_at_epoch_s\":1640995200,\"window_start_epoch_s\":1640995200,\"window_end_epoch_s\":1641016800,\"precip_mm\":2,\"max_hourly_probability_pct\":60,\"ttl_s\":30}\n"
   - wait-serial: 'ACK WEATHER fetched_at=1640995200 ttl_s=30'
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=VALIDO BOMBA=OFF MOTIVO=RAIN_HOLD'
   - wait-serial: 'RELE_COMANDO=OFF CONTATO_NO=ABERTO'
@@ -73,25 +73,26 @@ steps:
   - wait-serial: 'UMIDADE_INDICE=30.0 TEMPERATURA_C=23.0 RELE_COMANDO=ON CONTATO_NO=FECHADO'
   - set-control: { part-id: moistureSensor, control: humidity, value: 40 }
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=VALIDO BOMBA=OFF MOTIVO=RAIN_HOLD'
-  - write-serial: '{"type":"weather","schema_version":1,"precip_mm":1010}\n'
+  - write-serial: "{\"type\":\"weather\",\"schema_version\":1,\"precip_mm\":1010}\n"
   - wait-serial: 'ERRO JSON_INVALIDO'
-  - write-serial: '{"type":"weather","schema_version":1,"fetched_at_epoch_s":1640995200,"window_start_epoch_s":1640995200,"window_end_epoch_s":1641016800,"precip_mm":2,"max_hourly_probability_pct":60,"ttl_s":30}\n'
+  - write-serial: "{\"type\":\"weather\",\"schema_version\":1,\"fetched_at_epoch_s\":1640995200,\"window_start_epoch_s\":1640995200,\"window_end_epoch_s\":1641016800,\"precip_mm\":2,\"max_hourly_probability_pct\":60,\"ttl_s\":30}\n"
   - wait-serial: 'ERRO WEATHER_ANTIGO'
-  - write-serial: '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111\n'
+  - write-serial: '{'
+  - write-serial: "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111\n"
   - wait-serial: 'ERRO LINHA_LONGA'
-  - write-serial: '{"type":"weather_clear","schema_version":1}\n'
+  - write-serial: "{\"type\":\"weather_clear\",\"schema_version\":1}\n"
   - wait-serial: 'ACK WEATHER_CLEAR'
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=ON MOTIVO=MOISTURE_DEMAND'
   - set-control: { part-id: moistureSensor, control: humidity, value: 35 }
   - wait-serial: 'UMIDADE_INDICE=35.0 TEMPERATURA_C=23.0 RELE_COMANDO=ON CONTATO_NO=FECHADO'
-  - write-serial: '{"type":"weather","schema_version":1,"fetched_at_epoch_s":1640995201,"window_start_epoch_s":1640998800,"window_end_epoch_s":1641020400,"precip_mm":2,"max_hourly_probability_pct":60,"ttl_s":5}\n'
+  - write-serial: "{\"type\":\"weather\",\"schema_version\":1,\"fetched_at_epoch_s\":1640995201,\"window_start_epoch_s\":1640998800,\"window_end_epoch_s\":1641020400,\"precip_mm\":2,\"max_hourly_probability_pct\":60,\"ttl_s\":5}\n"
   - wait-serial: 'ACK WEATHER fetched_at=1640995201 ttl_s=5'
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=VALIDO BOMBA=OFF MOTIVO=RAIN_HOLD'
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=ON MOTIVO=MOISTURE_DEMAND'
   - wait-serial: 'RELE_COMANDO=ON CONTATO_NO=FECHADO'
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=OFF MOTIVO=TIMEOUT'
   - wait-serial: 'RELE_COMANDO=OFF CONTATO_NO=ABERTO'
-  - write-serial: '{"type":"reset","schema_version":1}\n'
+  - write-serial: "{\"type\":\"reset\",\"schema_version\":1}\n"
   - wait-serial: 'ACK RESET'
   - wait-serial: 'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=ON MOTIVO=MOISTURE_DEMAND'
   - write-serial: '0'
