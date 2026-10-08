@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -25,8 +25,31 @@ if (!fs.existsSync(path.join(project, 'build', 'irrigation.ino.bin'))) {
   console.error('Compile firmware/irrigation com --output-dir firmware/irrigation/build.');
   process.exit(1);
 }
+let scenario = 'circuit.test.yaml';
+let liveCommand;
+if (process.argv.includes('--live-weather')) {
+  const forecast = spawnSync('python3', [path.join(root, 'tools', 'weather.py'),
+    '--latitude=-23.55', '--longitude=-46.63'], { encoding: 'utf8', timeout: 30000 });
+  if (forecast.status !== 0) {
+    console.error('Falha na consulta real Open-Meteo. Nenhuma simulacao iniciada.');
+    process.exit(1);
+  }
+  liveCommand = JSON.parse(forecast.stdout);
+  const rainy = liveCommand.precip_mm >= 2 && liveCommand.max_hourly_probability_pct >= 60;
+  const expected = `CONTROLE MODO=AUTO CLIMA=VALIDO BOMBA=${rainy ? 'OFF' : 'ON'} MOTIVO=${rainy ? 'RAIN_HOLD' : 'MOISTURE_DEMAND'}`;
+  const extraSteps = [
+    `  - write-serial: ${JSON.stringify(forecast.stdout.trim() + '\n')}`,
+    `  - wait-serial: 'ACK WEATHER fetched_at=${liveCommand.fetched_at_epoch_s} ttl_s=3600'`,
+    `  - write-serial: '{"type":"auto","schema_version":1}\\n'`,
+    `  - wait-serial: '${expected}'`,
+    `  - wait-serial: 'RELE_COMANDO=${rainy ? 'OFF' : 'ON'} CONTATO_NO=${rainy ? 'ABERTO' : 'FECHADO'}'`,
+  ];
+  scenario = 'build/weather-live.test.yaml';
+  fs.writeFileSync(path.join(project, scenario),
+    fs.readFileSync(path.join(project, 'circuit.test.yaml'), 'utf8') + extraSteps.join('\n') + '\n');
+}
 const child = spawn('wokwi-cli', [
-  project, '--scenario', 'circuit.test.yaml', '--timeout', '65000',
+  project, '--scenario', scenario, '--timeout', '180000',
   '--serial-log-file', path.join(project, 'build', 'circuit-serial.log'),
 ], {
   env: { ...process.env, WOKWI_CLI_TOKEN: token },
@@ -65,7 +88,7 @@ if (result.error) {
 if (result.status === 0) {
   try {
     const log = fs.readFileSync(path.join(project, 'build', 'circuit-serial.log'), 'utf8');
-    const readings = [...log.matchAll(/N=(\d) P=(\d) K=(\d) ADC_LDR=(\d+) UMIDADE_INDICE=([\d.]+) TEMPERATURA_C=([\d.]+) RELE_COMANDO=(ON|OFF) CONTATO_NO=(ABERTO|FECHADO) PH_SIMULADO=([\d.]+) ALERTAS=([A-Z_,]+?)(?=N=[01]|RELE:|\s|$)/g)];
+    const readings = [...log.matchAll(/N=(\d) P=(\d) K=(\d) ADC_LDR=(\d+) UMIDADE_INDICE=([\d.]+) TEMPERATURA_C=([\d.]+) RELE_COMANDO=(ON|OFF) CONTATO_NO=(ABERTO|FECHADO) PH_SIMULADO=([\d.]+) ALERTAS=([A-Z_,]+?)(?=N=[01]|RELE:|CONTROLE|ACK|ERRO|\s|$)/g)];
     assert.ok(readings.length > 0, 'Nenhuma leitura completa registrada.');
     assert.equal(new Set(readings.map(reading => reading.slice(1, 4).join(''))).size, 8, 'Combinações de NPK incompletas.');
     for (const humidity of [0, 50, 100]) {
@@ -99,6 +122,18 @@ if (result.status === 0) {
     console.log(`OK: oito combinacoes NPK, conversao e alertas de pH, caso sem alertas e rele independente.`);
     console.log(`OK: umidades 0/50/100 e contato do rele consistente.`);
     console.log(`LDR: 0.1 lux=${dark}; 500 lux=${middle}; 100000 lux=${bright}.`);
+    for (const expected of [
+      'CONTROLE MODO=AUTO CLIMA=VALIDO BOMBA=OFF MOTIVO=RAIN_HOLD',
+      'CONTROLE MODO=AUTO CLIMA=VALIDO BOMBA=ON MOTIVO=CRITICAL_DRY',
+      'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=ON MOTIVO=MOISTURE_DEMAND',
+      'CONTROLE MODO=AUTO CLIMA=DESCONHECIDO BOMBA=OFF MOTIVO=TIMEOUT',
+      'ERRO JSON_INVALIDO', 'ERRO WEATHER_ANTIGO', 'ERRO LINHA_LONGA', 'ACK RESET',
+    ]) assert.ok(log.includes(expected), `Evidencia ausente: ${expected}`);
+    if (liveCommand) {
+      assert.ok(log.includes(`ACK WEATHER fetched_at=${liveCommand.fetched_at_epoch_s} ttl_s=3600`));
+      console.log(`OK: previsao real Open-Meteo recebida: ${liveCommand.precip_mm} mm; maxima horaria ${liveCommand.max_hourly_probability_pct}%.`);
+    }
+    console.log('OK: chuva, excecao critica, expiracao, JSON invalido, overflow, timeout e reset.');
   } catch (error) {
     console.error(`Falha na verificacao do registro: ${error.message.replaceAll(token, '[REDACTED]')}`);
     process.exit(1);

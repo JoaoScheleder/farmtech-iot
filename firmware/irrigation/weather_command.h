@@ -52,7 +52,9 @@ struct JsonReader {
 };
 
 inline CommandResult processWeatherCommand(const char* text, uint32_t nowMs, WeatherForecast& weather) {
-  JsonReader reader{text, std::strlen(text)};
+  JsonReader reader;
+  reader.text = text;
+  reader.length = std::strlen(text);
   JsonDocument document;
   const auto error = deserializeJson(document, reader, DeserializationOption::NestingLimit(2));
   if (error || !document.is<JsonObject>()) return CommandResult::Invalid;
@@ -87,8 +89,16 @@ inline CommandResult processWeatherCommand(const char* text, uint32_t nowMs, Wea
       || ttl > 3600 || !std::isfinite(rain) || rain < 0 || rain > 6000
       || !std::isfinite(probability) || probability < 0 || probability > 100) return CommandResult::Invalid;
   if (fetched <= weather.fetchedAt) return CommandResult::Outdated;
-  weather = {true, fetched, start, end, static_cast<float>(rain),
-             static_cast<float>(probability), ttl, nowMs};
+  WeatherForecast accepted;
+  accepted.present = true;
+  accepted.fetchedAt = fetched;
+  accepted.windowStart = start;
+  accepted.windowEnd = end;
+  accepted.precipitationMm = static_cast<float>(rain);
+  accepted.probabilityPct = static_cast<float>(probability);
+  accepted.ttlSeconds = ttl;
+  accepted.receivedMs = nowMs;
+  weather = accepted;
   return CommandResult::Weather;
 }
 
