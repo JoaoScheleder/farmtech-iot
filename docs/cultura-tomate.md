@@ -1,6 +1,6 @@
 # Cultura escolhida: tomateiro
 
-Este documento registra a pesquisa da etapa 1 do projeto FarmTech Solutions, conforme o [enunciado](../CONTEXT.md). A cultura recomendada é o tomateiro (*Solanum lycopersicum*). O [circuito de diagnóstico](circuito-wokwi.md) passou pelos testes da etapa 2 na nuvem; o controle automático e a conversão do LDR para pH ainda estão pendentes.
+Este documento registra a pesquisa da etapa 1 do projeto FarmTech Solutions, conforme o [enunciado](../CONTEXT.md). A cultura recomendada é o tomateiro (*Solanum lycopersicum*). O [circuito de diagnóstico](circuito-wokwi.md), a conversão didática do LDR e os alertas de nutrientes/pH passaram pelos testes correspondentes; o controle automático ainda está pendente.
 
 ## Recorte do projeto
 
@@ -14,7 +14,7 @@ A Clemson Extension recomenda manter o pH do solo entre **6,0 e 6,5**, com corre
 
 A Penn State Extension apresenta uma faixa de **5,8 a 6,6** para produção de tomate [2]. A diferença entre as fontes deve ser preservada: não existe aqui a pretensão de estabelecer uma faixa universal para qualquer região, solo ou sistema produtivo.
 
-Na simulação, valores de pH abaixo de 6,0 ou acima de 6,5 gerarão alertas. O LDR não mede pH: sua leitura será convertida para uma escala artificial de 0 a 14. Os extremos e a direção dessa conversão precisam ser verificados no circuito antes da implementação definitiva.
+Na simulação, valores de pH abaixo de 6,0 ou acima de 6,5 geram alertas. O LDR não mede pH: sua leitura é convertida para uma escala artificial de 0 a 14 com base nos pontos ADC 32 e 4063 observados no circuito. Essa conversão e seus limites foram verificados nos testes, mas não representam uma medição química nem substituem calibração de um sensor real de pH.
 
 ## Necessidades de nutrientes
 

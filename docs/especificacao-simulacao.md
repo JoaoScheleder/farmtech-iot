@@ -1,6 +1,6 @@
 # Especificação proposta da simulação
 
-Esta especificação traduz o [enunciado](../CONTEXT.md) e a [pesquisa do tomateiro](cultura-tomate.md) em regras verificáveis. **As regras de irrigação abaixo continuam propostas, ainda sem controle automático implementado.** O [circuito e o sketch de diagnóstico](circuito-wokwi.md) passaram pelos testes de sensores, botões e contato do relé na nuvem; isso não valida as regras de controle abaixo.
+Esta especificação traduz o [enunciado](../CONTEXT.md) e a [pesquisa do tomateiro](cultura-tomate.md) em regras verificáveis. **As regras de irrigação abaixo continuam propostas, ainda sem controle automático implementado.** O [circuito e o sketch de diagnóstico](circuito-wokwi.md) já implementam conversão didática de pH e alertas NPK/pH, verificados localmente e na nuvem; isso não valida as regras de irrigação abaixo.
 
 ## Componentes e significado das entradas
 
@@ -20,9 +20,9 @@ O relé deve iniciar desligado. Para o componente `npn` desta montagem, o teste 
 
 ## Conversão do LDR
 
-A leitura analógica será normalizada entre extremos observados no ESP32 e convertida para a escala artificial de 0 a 14. Antes de fixar a conversão, o grupo deverá registrar resolução do ADC, configuração, extremos alcançáveis e sentido de variação.
+A leitura analógica é convertida pela função [simulatedPhFromAdc](../firmware/irrigation/alerts.h), usando os pontos observados ADC 32 e 4063 para pH 0 e 14, respectivamente. A fórmula é `limitar((ADC - 32) * 14 / 4031, 0, 14)`. A configuração é ADC de 12 bits com atenuação `ADC_11db`; mais iluminação produz menor pH simulado neste circuito. ADC fora de 0–4095 é rejeitado, não convertido em um pH válido.
 
-Essa configuração é uma calibração **do cenário simulado**, não uma calibração química. Não será copiada diretamente uma conversão que pressuponha ADC de 10 bits ou alimentação de 5 V. A conversão deverá permitir demonstrar valores próximos dos limites 6,0 e 6,5; a tolerância de leitura será documentada após os testes.
+Essa configuração é uma calibração **do cenário simulado**, não uma calibração química. A variação por unidade ADC é aproximadamente 0,00347 na região não limitada. O Serial apresenta três casas decimais, mas a comparação usa o valor antes do arredondamento. Os limites exatos 6,0 e 6,5 passaram nos testes da função C++; em 140 lux, a execução na nuvem registrou pH 6,158 dentro da faixa. Uma alteração no ADC ou na montagem exige nova verificação dos pontos de referência.
 
 ## Parâmetros iniciais
 
@@ -50,9 +50,9 @@ O índice de umidade não é teor de água do solo. Nenhum desses limiares de um
 
 ## Alertas nutricionais e de pH
 
-Cada botão solto gera um alerta identificado pelo nutriente correspondente. Um pH abaixo de 6,0 ou acima de 6,5 gera alerta de pH fora da faixa. Valores exatamente nos limites pertencem à faixa adotada.
+Cada botão solto gera `N_INSUFICIENTE`, `P_INSUFICIENTE` ou `K_INSUFICIENTE`. Um pH válido abaixo de 6,0 ou acima de 6,5 gera `PH_FORA_FAIXA`; os limites pertencem à faixa adotada. Valores não finitos ou fora de 0–14 geram `PH_INVALIDO`, não um alerta de faixa agronômica. Essas verificações estão implementadas e testadas. Sem alertas, o Serial registra `ALERTAS=NENHUM`.
 
-Esses alertas serão registrados junto à decisão, mas **não impedirão uma irrigação necessária**. Trata-se de uma decisão do grupo: uma deficiência nutricional não elimina a necessidade de água e irrigar não resolve, por si só, a deficiência ou o pH inadequado.
+Esses alertas já são registrados junto ao estado do relé e **não bloqueiam seu teste manual**, como confirmado na nuvem. No futuro controle automático, também não deverão impedir uma irrigação necessária. Trata-se de uma decisão do grupo: uma deficiência nutricional não elimina a necessidade de água e irrigar não resolve, por si só, a deficiência ou o pH inadequado. Falhas de sensor e outros bloqueios de segurança serão tratados separadamente na etapa de controle.
 
 Quando o demonstrador alterar NPK, deverá também ajustar o LDR para representar uma mudança de cenário, conforme o enunciado. O firmware não deverá inventar um pH a partir dos botões nem substituir a leitura do LDR.
 

@@ -40,6 +40,20 @@ Os valores exatos de pH serão usados nos testes da lógica. Na demonstração p
 | 1 | 1 | 0 | K insuficiente | Pendente |
 | 1 | 1 | 1 | Nenhum alerta de NPK | Pendente |
 
+Os alertas desta tabela foram aprovados nos testes locais e na nuvem; a situação pendente refere-se ao acionamento por umidade 35 no futuro controle automático. A tabela considera apenas NPK: `PH_FORA_FAIXA` pode aparecer adicionalmente conforme o LDR.
+
+## Alertas implementados
+
+| Verificação | Resultado | Evidência |
+| --- | --- | --- |
+| Oito combinações NPK com pH 6,2 na função | Alertas individuais corretos | Teste C++ aprovado |
+| pH 5,9 / 6,0 / 6,5 / 6,6 na função | Alerta apenas em 5,9 e 6,6 | Teste C++ aprovado |
+| pH não finito ou fora de 0–14 | `PH_INVALIDO`, sem classificá-lo como faixa agronômica | Teste C++ aprovado |
+| NPK pressionados e LDR 140 lux no circuito | pH 6,158 e `ALERTAS=NENHUM` | Cenário Wokwi aprovado |
+| Relé manualmente ligado com NPK soltos e pH 0 | Contato fechado e quatro alertas simultâneos | Cenário Wokwi aprovado |
+
+A [lógica de alertas](../firmware/irrigation/alerts.h) e os [testes C++](../tests/alerts_test.cpp) não comandam o relé. O [guia do circuito](circuito-wokwi.md) detalha a conversão e os comandos de reprodução. Não se deve considerar B07 ou B08 inteiramente aprovados: ainda falta o controle automático por umidade.
+
 ## Segurança e recuperação
 
 | ID | Condição | Resultado esperado | Situação |
