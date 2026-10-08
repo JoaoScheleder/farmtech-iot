@@ -119,7 +119,7 @@ def run_simulation(request):
         if duration % 2.5:
             raise ValueError("Duracao deve ser multipla de 2.5 segundos")
         steps = [{"seconds": duration}]
-    settings = definition.get("weather", request.get("weather", {"source": "none"}))
+    settings = request.get("weather", definition.get("weather", {"source": "none"}))
     present, rain, probability, ttl = forecast_values(settings)
     rows, snapshots = [], []
     now = 0

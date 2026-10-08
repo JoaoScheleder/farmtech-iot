@@ -66,6 +66,16 @@ class SimulatorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "controle por umidade"):
                 simulator.fetch_command(0, 0)
 
+    def test_explicit_weather_overrides_preset(self):
+        result = simulator.run_simulation({"case": "rain", "weather": {"source": "none"}})
+        self.assertEqual(result["frames"][0]["reason"], "MOISTURE_DEMAND")
+
+    def test_custom_duration(self):
+        self.assertEqual(len(simulator.run_simulation({"seconds": 5})["frames"]), 3)
+        for seconds in (121, -1, 3, True):
+            with self.subTest(seconds=seconds), self.assertRaises(ValueError):
+                simulator.run_simulation({"seconds": seconds})
+
 
 if __name__ == "__main__":
     unittest.main()
