@@ -29,7 +29,6 @@ farmtech-iot/
 └── tests/                    Testes C++ e Python
 ```
 
-A pasta de build é gerada localmente e ignorada pelo Git. Não é necessário versionar seus binários ou logs.
 
 ### Firmware e circuito
 
@@ -210,6 +209,5 @@ Não declare a suíte completa aprovada caso ela termine por timeout ou erro. A 
 | [Cenários de validação](docs/cenarios-validacao.md) | Matriz de resultados esperados e rastreabilidade da etapa inicial. |
 | [Circuito Wokwi](docs/circuito-wokwi.md) | Montagem, pinagem e evidências históricas de diagnóstico. |
 | [Simulador local](docs/simulador-local.md) | Operação detalhada do painel, cenários e verificações da interface. |
-| [Roteiro de vídeo](docs/roteiro.md) | Preparação e sequência da apresentação de até cinco minutos. |
 
 Para concluir a entrega, o grupo ainda deve registrar imagens reais do circuito, o link do projeto Wokwi salvo e o vídeo não listado no YouTube. Não há evidência de economia real de água ou aumento de produtividade em campo.
